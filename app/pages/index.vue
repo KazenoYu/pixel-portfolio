@@ -4,12 +4,14 @@ const { data: notes } = await useAsyncData('home-notes', () => {
     .where('path', 'LIKE', '/notes/%')
     .where('draft', '<>', true)
     .order('date', 'DESC')
-    .limit(6)
+    .limit(12)
     .all()
 })
 
 const entering = ref(false)
-const colors = ['#fef08a', '#fda4af', '#a7f3d0', '#bfdbfe', '#fdba74']
+const pageY = ref(0)
+const scrolled = computed(() => pageY.value > 80)
+const showStickyBunny = computed(() => pageY.value > 200)
 
 function scrollToNotes() {
   document.getElementById('notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -26,6 +28,21 @@ function enterForest() {
   setTimeout(() => { entering.value = false }, 1200)
 }
 
+onMounted(() => {
+  let ticking = false
+  const onScroll = () => {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
+      pageY.value = window.scrollY
+      ticking = false
+    })
+  }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+  onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
+})
+
 useHead({
   title: 'Quiet Notes — 慢慢長出來的學習紀錄',
   meta: [
@@ -36,8 +53,24 @@ useHead({
 
 <template>
   <div class="px">
+    <!-- Sticky bunny companion -->
+    <aside class="sticky-bunny" :class="{ visible: showStickyBunny }" aria-hidden="true">
+      <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+        <rect x="4" y="1" width="2" height="3" fill="#f3e8c6"/>
+        <rect x="8" y="1" width="2" height="3" fill="#f3e8c6"/>
+        <rect x="3" y="4" width="2" height="2" fill="#f3e8c6"/>
+        <rect x="9" y="4" width="2" height="2" fill="#f3e8c6"/>
+        <rect x="3" y="6" width="8" height="4" fill="#f3e8c6"/>
+        <rect x="5" y="7" width="1" height="1" fill="#1f3329"/>
+        <rect x="8" y="7" width="1" height="1" fill="#1f3329"/>
+        <rect x="2" y="10" width="10" height="4" fill="#e57865"/>
+        <rect x="2" y="14" width="2" height="2" fill="#f3e8c6"/>
+        <rect x="10" y="14" width="2" height="2" fill="#f3e8c6"/>
+      </svg>
+    </aside>
+
     <div class="frame">
-      <header class="topbar">
+      <header class="topbar" :class="{ scrolled }">
         <button class="brand brand-btn" @click="scrollToTop">
           <span class="logo">▲</span>
           <span class="name">Quiet Notes</span>
@@ -207,9 +240,20 @@ useHead({
 
 <style scoped>
 .px { background: #f5f7f4; min-height: 100vh; padding: 1.5rem; font-family: 'Pixelify Sans', 'VT323', 'JetBrains Mono', ui-monospace, monospace; color: #1f3329; }
-.frame { max-width: 1100px; margin: 0 auto; background: linear-gradient(180deg, #d8e4dc 0%, #c8d8cf 60%, #97b6ad 60%, #97b6ad 100%); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 0 #1f3329, 0 0 0 3px #1f3329; }
+.frame { max-width: 1100px; margin: 0 auto; background: linear-gradient(180deg, #d8e4dc 0%, #c8d8cf 60%, #97b6ad 60%, #97b6ad 100%); border-radius: 8px; overflow: clip; box-shadow: 0 8px 0 #1f3329, 0 0 0 3px #1f3329; }
 
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; gap: 1.5rem; flex-wrap: wrap; background: rgba(248, 243, 230, 0.4); }
+/* Sticky bunny companion — appears after scrolling past hero */
+.sticky-bunny { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; z-index: 100; opacity: 0; transform: translateY(20px) scale(.8); transition: opacity .35s, transform .35s; pointer-events: none; image-rendering: pixelated; filter: drop-shadow(2px 2px 0 rgba(31, 51, 41, 0.4)); }
+.sticky-bunny.visible { opacity: 1; transform: translateY(0) scale(1); animation: bunny-hop 2.6s steps(2) infinite 0.4s; }
+.sticky-bunny svg { width: 100%; height: 100%; display: block; }
+@keyframes bunny-hop { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
+
+/* topbar — sticky, shrinks on scroll */
+.topbar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; gap: 1.5rem; flex-wrap: wrap; background: rgba(248, 243, 230, 0.4); backdrop-filter: blur(4px); transition: padding .25s, background .25s, backdrop-filter .25s, box-shadow .25s; }
+.topbar.scrolled { padding: .65rem 2rem; background: rgba(248, 243, 230, 0.88); backdrop-filter: blur(14px); box-shadow: 0 2px 0 rgba(31, 51, 41, 0.08); }
+.topbar.scrolled .logo { font-size: .95rem; }
+.topbar.scrolled .name { font-size: .9rem; }
+.topbar.scrolled .cta-mini { padding: 5px 12px; font-size: .76rem; box-shadow: 2px 2px 0 #1f3329; }
 .brand { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
 .brand-btn { background: transparent; border: none; font: inherit; cursor: pointer; color: inherit; padding: 0; }
 .logo { color: #1f3329; font-size: 1.1rem; }
