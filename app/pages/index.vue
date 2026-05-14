@@ -13,6 +13,18 @@ const pageY = ref(0)
 const scrolled = computed(() => pageY.value > 80)
 const showStickyBunny = computed(() => pageY.value > 200)
 
+const totalVisits = ref(0)
+const noteCounts = ref<Record<string, number>>({})
+
+function formatCount(n: number): string {
+  if (n >= 1000) return n.toLocaleString()
+  return String(n)
+}
+
+function slugFromPath(path: string): string {
+  return path.replace(/^\/notes\//, '')
+}
+
 function scrollToNotes() {
   document.getElementById('notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -41,6 +53,13 @@ onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
   onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
+
+  // Track visit + load note view counts (graceful if Upstash unset → 0)
+  trackVisit().then((n) => { totalVisits.value = n })
+  const slugs = (notes.value ?? []).map(n => slugFromPath(n.path))
+  if (slugs.length) {
+    fetchNoteCounts(slugs).then((map) => { noteCounts.value = map })
+  }
 })
 
 useHead({
@@ -53,6 +72,24 @@ useHead({
 
 <template>
   <div class="px">
+    <!-- Hero corner pixel badge: total visits -->
+    <aside v-if="totalVisits > 0" class="visit-badge" aria-label="累計訪客數">
+      <svg class="badge-eye" viewBox="0 0 16 8" shape-rendering="crispEdges">
+        <rect x="3" y="2" width="10" height="1" fill="#1f3329"/>
+        <rect x="2" y="3" width="1" height="2" fill="#1f3329"/>
+        <rect x="13" y="3" width="1" height="2" fill="#1f3329"/>
+        <rect x="3" y="5" width="10" height="1" fill="#1f3329"/>
+        <rect x="3" y="3" width="10" height="2" fill="#f3e8c6"/>
+        <rect x="6" y="3" width="4" height="2" fill="#1f3329"/>
+        <rect x="7" y="3" width="1" height="1" fill="#fffbf2"/>
+      </svg>
+      <span class="badge-text">
+        <span class="badge-prefix">這座森林來過</span>
+        <span class="badge-count">{{ formatCount(totalVisits) }}</span>
+        <span class="badge-suffix">位旅人</span>
+      </span>
+    </aside>
+
     <!-- Sticky bunny companion -->
     <aside class="sticky-bunny" :class="{ visible: showStickyBunny }" aria-hidden="true">
       <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
@@ -215,7 +252,20 @@ useHead({
             <p v-if="n.description">{{ n.description }}</p>
             <div class="card-bot">
               <time v-if="n.date">{{ n.date }}</time>
-              <span class="read">{{ n.readMin ? `${n.readMin} min →` : 'read →' }}</span>
+              <span class="read-meta">
+                <span v-if="noteCounts[slugFromPath(n.path)]" class="views" aria-label="閱讀數">
+                  <svg class="eye-sprite" viewBox="0 0 12 6" shape-rendering="crispEdges">
+                    <rect x="2" y="1" width="8" height="1" fill="#4a6f5d"/>
+                    <rect x="1" y="2" width="1" height="2" fill="#4a6f5d"/>
+                    <rect x="10" y="2" width="1" height="2" fill="#4a6f5d"/>
+                    <rect x="2" y="4" width="8" height="1" fill="#4a6f5d"/>
+                    <rect x="2" y="2" width="8" height="2" fill="#f3e8c6"/>
+                    <rect x="5" y="2" width="2" height="2" fill="#1f3329"/>
+                  </svg>
+                  {{ formatCount(noteCounts[slugFromPath(n.path)] || 0) }}
+                </span>
+                <span class="read">{{ n.readMin ? `${n.readMin} min →` : 'read →' }}</span>
+              </span>
             </div>
           </NuxtLink>
         </div>
@@ -229,9 +279,9 @@ useHead({
         </div>
         <div class="ft-socials">
           <a href="#" aria-label="RSS" class="ic-link ic-rss"></a>
-          <a href="#" aria-label="GitHub" class="ic-link ic-github"></a>
-          <a href="#" aria-label="Twitter / X" class="ic-link ic-twitter"></a>
-          <a href="#" aria-label="Email" class="ic-link ic-mail"></a>
+          <a href="/feed.xml" aria-label="RSS feed" class="ic-link ic-rss"></a>
+          <a href="https://github.com/KazenoYu" target="_blank" rel="noopener" aria-label="GitHub" class="ic-link ic-github"></a>
+          <NuxtLink to="/contact" aria-label="Contact" class="ic-link ic-mail" />
         </div>
       </footer>
     </div>
@@ -241,6 +291,46 @@ useHead({
 <style scoped>
 .px { background: #f5f7f4; min-height: 100vh; padding: 1.5rem; font-family: 'Pixelify Sans', 'VT323', 'JetBrains Mono', ui-monospace, monospace; color: #1f3329; }
 .frame { max-width: 1100px; margin: 0 auto; background: linear-gradient(180deg, #d8e4dc 0%, #c8d8cf 60%, #97b6ad 60%, #97b6ad 100%); border-radius: 8px; overflow: clip; box-shadow: 0 8px 0 #1f3329, 0 0 0 3px #1f3329; }
+
+/* Hero corner pixel badge: total visit counter */
+.visit-badge {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: 7px 14px;
+  background: #fffbf2;
+  color: #1f3329;
+  border: 2px solid #1f3329;
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 #1f3329;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem;
+  animation: badge-enter .5s steps(3) .8s both;
+  transition: transform .15s, box-shadow .15s;
+}
+.visit-badge:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #1f3329; }
+.badge-eye { width: 22px; height: 11px; image-rendering: pixelated; flex-shrink: 0; }
+.badge-text { display: inline-flex; align-items: baseline; gap: .35rem; white-space: nowrap; }
+.badge-prefix, .badge-suffix { color: #4a6f5d; font-size: .72rem; }
+.badge-count { font-family: 'Pixelify Sans', sans-serif; font-size: 1rem; font-weight: 600; color: #e57865; font-variant-numeric: tabular-nums; }
+@keyframes badge-enter {
+  0%   { opacity: 0; transform: translateY(-12px) scale(.85); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 600px) {
+  .visit-badge { top: 12px; right: 12px; padding: 5px 10px; font-size: .72rem; }
+  .badge-prefix { display: none; }
+  .badge-eye { width: 18px; height: 9px; }
+}
+
+/* Per-note view counter (in card) */
+.read-meta { display: inline-flex; align-items: center; gap: .65rem; }
+.views { display: inline-flex; align-items: center; gap: .3rem; color: #4a6f5d; font-variant-numeric: tabular-nums; }
+.eye-sprite { width: 14px; height: 7px; image-rendering: pixelated; }
 
 /* Sticky bunny companion — appears after scrolling past hero */
 .sticky-bunny { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; z-index: 100; opacity: 0; transform: translateY(20px) scale(.8); transition: opacity .35s, transform .35s; pointer-events: none; image-rendering: pixelated; filter: drop-shadow(2px 2px 0 rgba(31, 51, 41, 0.4)); }

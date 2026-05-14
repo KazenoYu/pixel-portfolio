@@ -28,6 +28,15 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+const viewCount = ref(0)
+
+onMounted(() => {
+  const slug = route.path.replace(/^\/notes\//, '')
+  if (slug) {
+    trackNoteView(slug).then((n) => { viewCount.value = n })
+  }
+})
+
 useHead(() => ({
   title: page.value?.title ? `${page.value.title} — Quiet Notes` : 'Quiet Notes',
   meta: [{ name: 'description', content: page.value?.description || '' }],
@@ -90,6 +99,20 @@ useHead(() => ({
               <span class="dot"></span>
               <span>{{ page.readMin }} min read</span>
             </template>
+            <template v-if="viewCount > 0">
+              <span class="dot"></span>
+              <span class="views-inline" aria-label="閱讀數">
+                <svg class="eye-sprite" viewBox="0 0 12 6" shape-rendering="crispEdges">
+                  <rect x="2" y="1" width="8" height="1" fill="#4a6f5d"/>
+                  <rect x="1" y="2" width="1" height="2" fill="#4a6f5d"/>
+                  <rect x="10" y="2" width="1" height="2" fill="#4a6f5d"/>
+                  <rect x="2" y="4" width="8" height="1" fill="#4a6f5d"/>
+                  <rect x="2" y="2" width="8" height="2" fill="#f3e8c6"/>
+                  <rect x="5" y="2" width="2" height="2" fill="#1f3329"/>
+                </svg>
+                {{ viewCount }}
+              </span>
+            </template>
           </div>
           <h1>{{ page.title }}</h1>
           <p v-if="page.description" class="dek">{{ page.description }}</p>
@@ -127,10 +150,9 @@ useHead(() => ({
           <span>Quiet Notes · 2026 · 用 Vue 與一些耐心，慢慢長出來。</span>
         </div>
         <div class="ft-socials">
-          <a href="#" aria-label="RSS" class="ic-link ic-rss"></a>
-          <a href="#" aria-label="GitHub" class="ic-link ic-github"></a>
-          <a href="#" aria-label="Twitter / X" class="ic-link ic-twitter"></a>
-          <a href="#" aria-label="Email" class="ic-link ic-mail"></a>
+          <a href="/feed.xml" aria-label="RSS feed" class="ic-link ic-rss"></a>
+          <a href="https://github.com/KazenoYu" target="_blank" rel="noopener" aria-label="GitHub" class="ic-link ic-github"></a>
+          <NuxtLink to="/contact" aria-label="Contact" class="ic-link ic-mail" />
         </div>
       </footer>
     </div>
@@ -166,6 +188,8 @@ useHead(() => ({
 .meta-top .dot { width: 3px; height: 3px; background: #97b6ad; border-radius: 50%; }
 .art-head h1 { font-family: 'DM Serif Display', Georgia, 'Noto Serif TC', serif; font-size: clamp(2rem, 5vw, 2.85rem); font-weight: 400; line-height: 1.15; letter-spacing: -.01em; color: #1f3329; margin: 0 0 1rem; }
 .art-head .dek { font-family: 'Inter', system-ui, sans-serif; font-size: 1.1rem; line-height: 1.55; color: #2c4a3c; margin: 0 0 1.25rem; }
+.views-inline { display: inline-flex; align-items: center; gap: .3rem; font-family: 'JetBrains Mono', monospace; }
+.eye-sprite { width: 14px; height: 7px; image-rendering: pixelated; }
 .art-head .tags { display: flex; flex-wrap: wrap; gap: .4rem; }
 .art-head .tags span { font-family: 'JetBrains Mono', monospace; background: #97b6ad; color: #1f3329; border: 1.5px solid #1f3329; padding: 2px 9px; font-size: .72rem; font-weight: 600; }
 
