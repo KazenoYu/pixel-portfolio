@@ -102,14 +102,7 @@ useHead(() => ({
             <template v-if="viewCount > 0">
               <span class="dot"></span>
               <span class="views-inline" aria-label="閱讀數">
-                <svg class="eye-sprite" viewBox="0 0 12 6" shape-rendering="crispEdges">
-                  <rect x="2" y="1" width="8" height="1" fill="#4a6f5d"/>
-                  <rect x="1" y="2" width="1" height="2" fill="#4a6f5d"/>
-                  <rect x="10" y="2" width="1" height="2" fill="#4a6f5d"/>
-                  <rect x="2" y="4" width="8" height="1" fill="#4a6f5d"/>
-                  <rect x="2" y="2" width="8" height="2" fill="#f3e8c6"/>
-                  <rect x="5" y="2" width="2" height="2" fill="#1f3329"/>
-                </svg>
+                <i class="eye-sprite" aria-hidden="true"></i>
                 {{ viewCount }}
               </span>
             </template>
@@ -189,7 +182,14 @@ useHead(() => ({
 .art-head h1 { font-family: 'DM Serif Display', Georgia, 'Noto Serif TC', serif; font-size: clamp(2rem, 5vw, 2.85rem); font-weight: 400; line-height: 1.15; letter-spacing: -.01em; color: #1f3329; margin: 0 0 1rem; }
 .art-head .dek { font-family: 'Inter', system-ui, sans-serif; font-size: 1.1rem; line-height: 1.55; color: #2c4a3c; margin: 0 0 1.25rem; }
 .views-inline { display: inline-flex; align-items: center; gap: .3rem; font-family: 'JetBrains Mono', monospace; }
-.eye-sprite { width: 14px; height: 7px; image-rendering: pixelated; }
+.eye-sprite {
+  display: inline-block;
+  width: 13px; height: 13px;
+  background-color: #4a6f5d;
+  -webkit-mask: url('https://unpkg.com/pixelarticons@latest/svg/eye.svg') center/contain no-repeat;
+          mask: url('https://unpkg.com/pixelarticons@latest/svg/eye.svg') center/contain no-repeat;
+  image-rendering: pixelated;
+}
 .art-head .tags { display: flex; flex-wrap: wrap; gap: .4rem; }
 .art-head .tags span { font-family: 'JetBrains Mono', monospace; background: #97b6ad; color: #1f3329; border: 1.5px solid #1f3329; padding: 2px 9px; font-size: .72rem; font-weight: 600; }
 

@@ -74,15 +74,7 @@ useHead({
   <div class="px">
     <!-- Hero corner pixel badge: total visits -->
     <aside v-if="totalVisits > 0" class="visit-badge" aria-label="累計訪客數">
-      <svg class="badge-eye" viewBox="0 0 16 8" shape-rendering="crispEdges">
-        <rect x="3" y="2" width="10" height="1" fill="#1f3329"/>
-        <rect x="2" y="3" width="1" height="2" fill="#1f3329"/>
-        <rect x="13" y="3" width="1" height="2" fill="#1f3329"/>
-        <rect x="3" y="5" width="10" height="1" fill="#1f3329"/>
-        <rect x="3" y="3" width="10" height="2" fill="#f3e8c6"/>
-        <rect x="6" y="3" width="4" height="2" fill="#1f3329"/>
-        <rect x="7" y="3" width="1" height="1" fill="#fffbf2"/>
-      </svg>
+      <i class="badge-eye" aria-hidden="true"></i>
       <span class="badge-text">
         <span class="badge-prefix">這座森林來過</span>
         <span class="badge-count">{{ formatCount(totalVisits) }}</span>
@@ -254,14 +246,7 @@ useHead({
               <time v-if="n.date">{{ n.date }}</time>
               <span class="read-meta">
                 <span v-if="noteCounts[slugFromPath(n.path)]" class="views" aria-label="閱讀數">
-                  <svg class="eye-sprite" viewBox="0 0 12 6" shape-rendering="crispEdges">
-                    <rect x="2" y="1" width="8" height="1" fill="#4a6f5d"/>
-                    <rect x="1" y="2" width="1" height="2" fill="#4a6f5d"/>
-                    <rect x="10" y="2" width="1" height="2" fill="#4a6f5d"/>
-                    <rect x="2" y="4" width="8" height="1" fill="#4a6f5d"/>
-                    <rect x="2" y="2" width="8" height="2" fill="#f3e8c6"/>
-                    <rect x="5" y="2" width="2" height="2" fill="#1f3329"/>
-                  </svg>
+                  <i class="eye-sprite" aria-hidden="true"></i>
                   {{ formatCount(noteCounts[slugFromPath(n.path)] || 0) }}
                 </span>
                 <span class="read">{{ n.readMin ? `${n.readMin} min →` : 'read →' }}</span>
@@ -313,7 +298,15 @@ useHead({
   transition: transform .15s, box-shadow .15s;
 }
 .visit-badge:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #1f3329; }
-.badge-eye { width: 22px; height: 11px; image-rendering: pixelated; flex-shrink: 0; }
+.badge-eye {
+  display: inline-block;
+  width: 16px; height: 16px;
+  background-color: #1f3329;
+  -webkit-mask: url('https://unpkg.com/pixelarticons@latest/svg/eye.svg') center/contain no-repeat;
+          mask: url('https://unpkg.com/pixelarticons@latest/svg/eye.svg') center/contain no-repeat;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
 .badge-text { display: inline-flex; align-items: baseline; gap: .35rem; white-space: nowrap; }
 .badge-prefix, .badge-suffix { color: #4a6f5d; font-size: .72rem; }
 .badge-count { font-family: 'Pixelify Sans', sans-serif; font-size: 1rem; font-weight: 600; color: #e57865; font-variant-numeric: tabular-nums; }
@@ -330,7 +323,14 @@ useHead({
 /* Per-note view counter (in card) */
 .read-meta { display: inline-flex; align-items: center; gap: .65rem; }
 .views { display: inline-flex; align-items: center; gap: .3rem; color: #4a6f5d; font-variant-numeric: tabular-nums; }
-.eye-sprite { width: 14px; height: 7px; image-rendering: pixelated; }
+.eye-sprite {
+  display: inline-block;
+  width: 13px; height: 13px;
+  background-color: #4a6f5d;
+  -webkit-mask: url('https://unpkg.com/pixelarticons@latest/svg/eye.svg') center/contain no-repeat;
+          mask: url('https://unpkg.com/pixelarticons@latest/svg/eye.svg') center/contain no-repeat;
+  image-rendering: pixelated;
+}
 
 /* Sticky bunny companion — appears after scrolling past hero */
 .sticky-bunny { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; z-index: 100; opacity: 0; transform: translateY(20px) scale(.8); transition: opacity .35s, transform .35s; pointer-events: none; image-rendering: pixelated; filter: drop-shadow(2px 2px 0 rgba(31, 51, 41, 0.4)); }
